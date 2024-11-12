@@ -1,0 +1,17 @@
+{
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "${workspaceFolder}/VC98/VC98.BAT",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "args": [
+                "CL",
+                "${workspaceFolder}/GomEditUI.cpp"],
+            "group": "build",
+
+        }
+    ]
+}

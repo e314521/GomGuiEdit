@@ -1,0 +1,12 @@
+{
+    "C_Cpp.default.includePath": [
+        // VC98编译器所在路径/INCLUDE
+        "${workspaceFolder}/VC98/INCLUDE"
+    ],
+    "code-runner.executorMap": {
+        // VC98编译器所在路径/VC98.BAT
+        "c": "cd $dir && D:/GomGuiEdit/VC98/VC98.BAT CL $fileName /nologo && $dir$fileNameWithoutExt",
+        // VC98编译器所在路径/VC98.BAT
+        "cpp": "cd $dir && D:/GomGuiEdit/VC98/VC98.BAT CL $fileName /nologo && $dir$fileNameWithoutExt"
+    }
+}
