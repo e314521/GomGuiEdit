@@ -7,7 +7,10 @@
 #define ID_BUTTON_UI          0x000102L
 #define ID_BUTTON_StateUI          0x000103L
 #define ID_BUTTON_ConfigUI          0x000104L
+#define ID_BUTTON_SaveUI         0x000105L
 typedef int (WINAPI * ShowEditDlgFunc)(void*, int, int);
+typedef int (WINAPI * SaveToMemoryFunc)();
+typedef int (WINAPI * CloseEditDlgFunc)();
 char* UI_buffer = NULL; 
 long UI_len=0;
 char* StateUI_buffer = NULL; 
@@ -15,6 +18,8 @@ long StateUI_len=0;
 char* ConfigUI_buffer = NULL; 
 long ConfigUI_len=0;
 ShowEditDlgFunc ShowEditDlg = NULL;
+SaveToMemoryFunc SaveToMemory = NULL;
+CloseEditDlgFunc CloseEditDlg = NULL;
 
 int main1(HWND hWnd)
 {
@@ -55,6 +60,18 @@ int init_UI() {
 	}
     ShowEditDlg = (ShowEditDlgFunc)GetProcAddress(hDll, "ShowEditDlg");
 	if (ShowEditDlg == NULL) {
+        MessageBoxA(NULL, "无法获取函数地址!", "提示", MB_OK);
+        return 1;
+    }
+
+    SaveToMemory = (SaveToMemoryFunc)GetProcAddress(hDll, "SaveToMemory");
+    if (SaveToMemory == NULL) {
+        MessageBoxA(NULL, "无法获取函数地址!", "提示", MB_OK);
+        return 1;
+    }
+
+    CloseEditDlg = (CloseEditDlgFunc)GetProcAddress(hDll, "CloseEditDlg");
+    if (CloseEditDlg == NULL) {
         MessageBoxA(NULL, "无法获取函数地址!", "提示", MB_OK);
         return 1;
     }
@@ -109,9 +126,34 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                 ShowEditDlg(StateUI_buffer, StateUI_len, 0);
             }else if (LOWORD(wParam) == ID_BUTTON_ConfigUI) {
                 ShowEditDlg(ConfigUI_buffer, ConfigUI_len, 0);
+            }else if (LOWORD(wParam) == ID_BUTTON_SaveUI) {
+                SaveToMemory();
+                FILE * file = fopen("UI_0/UI.DB", "wb");
+                if (file == NULL) {
+                    MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
+                    return 0;
+                }
+                fwrite(UI_buffer, UI_len, 1, file); 
+                fclose(file);
+                file = fopen("UI_0/StateUI.DB", "wb");
+                if (file == NULL) {
+                    MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
+                    return 0;
+                }
+                fwrite(StateUI_buffer, StateUI_len, 1, file); 
+                fclose(file);
+                file = fopen("UI_0/ConfigUI.DB", "wb");
+                if (file == NULL) {
+                    MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
+                    return 0;
+                }
+                fwrite(ConfigUI_buffer, ConfigUI_len, 1, file); 
+                fclose(file);
+                MessageBoxA(NULL, "保存成功!", "提示", MB_OK);
             }
             break;
         case WM_DESTROY:
+            CloseEditDlg();
             PostQuitMessage(0);
             return 0;
     }
@@ -142,7 +184,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         "SimpleWindow",
         "UI编辑器",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 320, 200,
+        CW_USEDEFAULT, CW_USEDEFAULT, 320, 150,
         NULL, NULL, hInstance, NULL
     );
  
@@ -150,6 +192,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MessageBox(NULL, TEXT("Window Creation Failed!"), TEXT("Error!"), MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    int windowWidth = 320;
+    int windowHeight = 150;
+    int x = (screenWidth - windowWidth) / 2;
+    int y = (screenHeight - windowHeight) / 2;
+    SetWindowPos(hWnd, HWND_TOP, x, y, windowWidth, windowHeight, SWP_SHOWWINDOW);
     CreateWindowA("BUTTON", "界面编辑", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
         10, 10, 80, 20, hWnd, (HMENU)ID_BUTTON_UI, hInstance, NULL);
 
@@ -158,6 +207,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     CreateWindowA("BUTTON", "连击编辑", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
         210, 10, 80, 20, hWnd, (HMENU)ID_BUTTON_ConfigUI, hInstance, NULL);
+
+    CreateWindowA("BUTTON", "保存修改", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+        110, 40, 80, 20, hWnd, (HMENU)ID_BUTTON_SaveUI, hInstance, NULL);
  
     ShowWindow(hWnd, nCmdShow);
  
