@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <windows.h>
 
-#define ID_MYBUTTON          0x000102L
+#define ID_BUTTON_UI          0x000102L
+#define ID_BUTTON_StateUI          0x000103L
+#define ID_BUTTON_ConfigUI          0x000104L
 typedef int (WINAPI * ShowEditDlgFunc)(void*, int, int);
 char* UI_buffer = NULL; 
 long UI_len=0;
@@ -101,8 +103,12 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
     switch (msg) {
         case WM_COMMAND:
             // 处理按钮点击消息
-            if (LOWORD(wParam) == ID_MYBUTTON) {
+            if (LOWORD(wParam) == ID_BUTTON_UI) {
                 ShowEditDlg(UI_buffer, UI_len, 0);
+            }else if (LOWORD(wParam) == ID_BUTTON_StateUI) {
+                ShowEditDlg(StateUI_buffer, StateUI_len, 0);
+            }else if (LOWORD(wParam) == ID_BUTTON_ConfigUI) {
+                ShowEditDlg(ConfigUI_buffer, ConfigUI_len, 0);
             }
             break;
         case WM_DESTROY:
@@ -131,12 +137,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 0;
     }
  
-    HWND hWnd = CreateWindowEx(
+    HWND hWnd = CreateWindowExA(
         WS_EX_OVERLAPPEDWINDOW,
-        TEXT("SimpleWindow"),
-        TEXT("Simple Window"),
+        "SimpleWindow",
+        "UI编辑器",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 300, 200,
+        CW_USEDEFAULT, CW_USEDEFAULT, 320, 200,
         NULL, NULL, hInstance, NULL
     );
  
@@ -144,8 +150,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MessageBox(NULL, TEXT("Window Creation Failed!"), TEXT("Error!"), MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
-    HWND hButton = CreateWindowA("BUTTON", "点击我", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-        200, 100, 100, 30, hWnd, (HMENU)ID_MYBUTTON, hInstance, NULL);
+    CreateWindowA("BUTTON", "界面编辑", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+        10, 10, 80, 20, hWnd, (HMENU)ID_BUTTON_UI, hInstance, NULL);
+
+    CreateWindowA("BUTTON", "内挂编辑", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+        110, 10, 80, 20, hWnd, (HMENU)ID_BUTTON_StateUI, hInstance, NULL);
+
+    CreateWindowA("BUTTON", "连击编辑", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+        210, 10, 80, 20, hWnd, (HMENU)ID_BUTTON_ConfigUI, hInstance, NULL);
  
     ShowWindow(hWnd, nCmdShow);
  
