@@ -11,15 +11,25 @@
 typedef int (WINAPI * ShowEditDlgFunc)(void*, int, int);
 typedef int (WINAPI * SaveToMemoryFunc)();
 typedef int (WINAPI * CloseEditDlgFunc)();
+
 char* UI_buffer = NULL; 
+char UI_path[256];
 long UI_len=0;
+
 char* StateUI_buffer = NULL; 
+char StateUI_path[256];
 long StateUI_len=0;
+
 char* ConfigUI_buffer = NULL; 
+char ConfigUI_path[256];
 long ConfigUI_len=0;
+
 ShowEditDlgFunc ShowEditDlg = NULL;
 SaveToMemoryFunc SaveToMemory = NULL;
 CloseEditDlgFunc CloseEditDlg = NULL;
+
+char ui_type[256];
+int ui_type_num = 0;
 
 int main1(HWND hWnd)
 {
@@ -76,9 +86,41 @@ int init_UI() {
         return 1;
     }
 
-    FILE * file = fopen("UI_0/UI.DB", "rb");
+
+
+    if (GetPrivateProfileStringA("Setup", "ClientVersion", "", ui_type, sizeof(ui_type), ".\\Config.ini") == 0) {
+        MessageBoxA(NULL, "无法获取登录器类型!", "提示", MB_OK);
+        return 1;
+    }
+    ui_type_num = atoi(ui_type);
+    if (ui_type_num < 6) {
+        strcpy(ui_type, "0");
+    }else if (ui_type_num == 6) {
+        strcpy(ui_type, "1");
+    }else if (ui_type_num == 7) {
+        strcpy(ui_type, "2");
+    }
+
+
+    //strcpy(ui_type, "UI_");
+    //lstrcat(ui_type, value);
+    //lstrcat(ui_type, "/");
+    char dir[256];
+    strcpy(dir, "UI_");
+    lstrcat(dir, ui_type);
+
+    strcpy(UI_path, dir);
+    lstrcat(UI_path, "/UI.DB");
+
+    strcpy(StateUI_path, dir);
+    lstrcat(StateUI_path, "/StateUI.DB");
+
+    strcpy(ConfigUI_path, dir);
+    lstrcat(ConfigUI_path, "/ConfigUI.DB");
+
+    FILE * file = fopen((const char *)UI_path, "rb");
 	if (file == NULL) {
-        MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
+        MessageBoxA(NULL, UI_path, "提示", MB_OK);
         return 1;
     }
     fseek(file, 0, SEEK_END);
@@ -88,7 +130,7 @@ int init_UI() {
     fread(UI_buffer, UI_len, 1, file); 
     fclose(file);
 
-    file = fopen("UI_0/StateUI.DB", "rb");
+    file = fopen((const char *)StateUI_path, "rb");
 	if (file == NULL) {
         MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
         return 1;
@@ -100,8 +142,7 @@ int init_UI() {
     fread(StateUI_buffer, StateUI_len, 1, file); 
     fclose(file);
 
-
-    file = fopen("UI_0/ConfigUI.DB", "rb");
+    file = fopen((const char *)ConfigUI_path, "rb");
 	if (file == NULL) {
         MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
         return 1;
@@ -121,28 +162,28 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_COMMAND:
             // 处理按钮点击消息
             if (LOWORD(wParam) == ID_BUTTON_UI) {
-                ShowEditDlg(UI_buffer, UI_len, 0);
+                ShowEditDlg(UI_buffer, UI_len, ui_type_num);
             }else if (LOWORD(wParam) == ID_BUTTON_StateUI) {
-                ShowEditDlg(StateUI_buffer, StateUI_len, 0);
+                ShowEditDlg(StateUI_buffer, StateUI_len, ui_type_num);
             }else if (LOWORD(wParam) == ID_BUTTON_ConfigUI) {
-                ShowEditDlg(ConfigUI_buffer, ConfigUI_len, 0);
+                ShowEditDlg(ConfigUI_buffer, ConfigUI_len, ui_type_num);
             }else if (LOWORD(wParam) == ID_BUTTON_SaveUI) {
                 SaveToMemory();
-                FILE * file = fopen("UI_0/UI.DB", "wb");
+                FILE * file = fopen(UI_path, "wb");
                 if (file == NULL) {
                     MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
                     return 0;
                 }
                 fwrite(UI_buffer, UI_len, 1, file); 
                 fclose(file);
-                file = fopen("UI_0/StateUI.DB", "wb");
+                file = fopen(StateUI_path, "wb");
                 if (file == NULL) {
                     MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
                     return 0;
                 }
                 fwrite(StateUI_buffer, StateUI_len, 1, file); 
                 fclose(file);
-                file = fopen("UI_0/ConfigUI.DB", "wb");
+                file = fopen(ConfigUI_path, "wb");
                 if (file == NULL) {
                     MessageBoxA(NULL, "无法打开文件!", "提示", MB_OK);
                     return 0;
